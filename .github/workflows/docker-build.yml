@@ -15,12 +15,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         
-      - name: Read version from package.json
+      - name: Read version from file
         id: version
         run: |
-          VERSION=$(node -p "require('./package.json').version")
-          echo "version=v$VERSION" >> $GITHUB_OUTPUT
-          echo "Found version: v$VERSION"
+          VERSION=$(cat version | tr -d '\n' | sed 's/^/v/')
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Found version: $VERSION"
         
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
