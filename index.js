@@ -18,6 +18,16 @@ const config = require("./config.js");
 (async () => {
 	const start = process.hrtime.bigint();
 
+	// Start web UI if enabled
+	if (process.env.WEB_UI_ENABLED === "true") {
+		try {
+			const webUI = require("./web-ui.js");
+			console.log("🌐 Web UI started alongside main application");
+		} catch (error) {
+			console.warn("⚠️  Failed to start Web UI:", error.message);
+		}
+	}
+
 	const platformsConfig = config.platforms;
 	if (!platformsConfig || platformsConfig.length === 0) {
 		console.warn("No platforms configured! Exiting.");
@@ -100,6 +110,17 @@ const config = require("./config.js");
 
 	const end = process.hrtime.bigint();
 	app.Logger.info("Client", `Initialize completed (${Number(end - start) / 1e6}ms)`);
+
+	// Start web UI if enabled
+	if (process.env.WEB_UI_ENABLED === "true") {
+		try {
+			const { startWebUI } = require("./web-server.js");
+			await startWebUI();
+			app.Logger.info("WebUI", "Web interface started successfully");
+		} catch (error) {
+			console.log("⚠️  Failed to start Web UI:", error.message);
+		}
+	}
 
 	process.on("unhandledRejection", (reason) => {
 		if (!(reason instanceof Error)) {

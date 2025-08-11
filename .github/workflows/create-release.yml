@@ -1,0 +1,162 @@
+name: Create Release
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'version'
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  create-release:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+          
+      - name: Check if version file changed
+        id: check
+        run: |
+          if git diff HEAD~1 HEAD --name-only | grep -q "^version$"; then
+            echo "changed=true" >> $GITHUB_OUTPUT
+            echo "Version file has changed"
+          else
+            echo "changed=false" >> $GITHUB_OUTPUT
+            echo "Version file has not changed"
+          fi
+          
+      - name: Read version
+        id: version
+        if: steps.check.outputs.changed == 'true'
+        run: |
+          VERSION=$(cat version | tr -d '\n' | sed 's/^v//')
+          TAG_VERSION="v$VERSION"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "tag_version=$TAG_VERSION" >> $GITHUB_OUTPUT
+          echo "Found version: $VERSION (Tag: $TAG_VERSION)"
+          
+      - name: Generate changelog
+        id: changelog
+        if: steps.check.outputs.changed == 'true'
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          
+          case "$VERSION" in
+            "2.0.0")
+              CHANGELOG=$(cat << 'EOF'
+          ## 🎉 HoyoLab Auto v2.0.0 - Major Release with Web UI!
+
+          This major release introduces a complete web-based setup wizard and configuration interface, making HoyoLab Auto more accessible than ever!
+
+          ### ✨ New Features
+
+          - **🌐 Web UI Setup Wizard**: Complete browser-based setup with guided configuration
+          - **⚙️ Settings Panel**: Modern web interface for managing accounts and notifications
+          - **🎮 Game Selection**: Interactive game cards for easy selection
+          - **🔑 Cookie Management**: Built-in cookie validation and testing
+          - **📱 Notification Setup**: Easy Discord, Telegram, and webhook configuration
+          - **📊 Live Dashboard**: Real-time overview of active accounts and statistics
+          - **🔄 Auto-Restart**: Seamless application restart after configuration changes
+
+          ### 🔧 Technical Improvements
+
+          - **🐳 Single Container**: Simplified Docker deployment with integrated web UI
+          - **🚀 Auto-Build**: GitHub Actions for automatic Docker image creation
+          - **📦 Docker Hub**: Pre-built images available on Docker Hub
+          - **🔧 Environment Variables**: Enhanced configuration through environment variables
+          - **⚡ Express.js**: Modern web server for configuration management
+
+          ### 🛠️ Setup Methods
+
+          **Option 1: Web Setup (New Users)**
+          ```bash
+          docker-compose up
+          # Access web UI at http://localhost:3090
+          ```
+
+          **Option 2: Traditional Setup**
+          ```bash
+          # Manual config.json5 editing still supported
+          ```
+
+          ### 🔄 Migration Guide
+
+          - **Existing Users**: Your `config.json5` files continue to work
+          - **New Users**: Use the web setup wizard for guided configuration
+          - **Docker Users**: Updated docker-compose.yml with single container
+
+          ### 📚 Documentation
+
+          - Complete setup guide in web-ui/README.md
+          - Interactive help tooltips in web interface
+          - API documentation for advanced users
+
+          ---
+
+          **Full Changelog**: [View all changes](https://github.com/TheInfamousToTo/hoyolab-auto/compare/v1.0.0...v2.0.0)
+          EOF
+              )
+              ;;
+            "1."*)
+              # Changelog for 1.x versions
+              CHANGELOG="## Release v$VERSION
+          
+          ### 🔧 Improvements
+          - Bug fixes and performance improvements
+          - Enhanced error handling and logging
+          - Updated dependencies for better security
+          
+          ### 🎮 Game Support
+          - Continued support for all HoyoVerse games
+          - Improved check-in reliability
+          - Better notification formatting
+          
+          **Full Changelog**: [View all changes](https://github.com/TheInfamousToTo/hoyolab-auto/commits/v$VERSION)"
+              ;;
+            *)
+              # Generic changelog for other versions
+              CHANGELOG="## Release v$VERSION
+          
+          Automatically generated release from package.json version update.
+          See commit history for detailed changes.
+          
+          **Full Changelog**: [View all changes](https://github.com/TheInfamousToTo/hoyolab-auto/commits/v$VERSION)"
+              ;;
+          esac
+          
+          # Save changelog to output (GitHub Actions multiline string)
+          echo "changelog<<EOF" >> $GITHUB_OUTPUT
+          echo "$CHANGELOG" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          
+      - name: Check if tag exists
+        id: check-tag
+        if: steps.check.outputs.changed == 'true'
+        run: |
+          TAG_VERSION="${{ steps.version.outputs.tag_version }}"
+          if git tag -l | grep -q "^$TAG_VERSION$"; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+            echo "Tag $TAG_VERSION already exists"
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+            echo "Tag $TAG_VERSION does not exist"
+          fi
+          
+      - name: Create GitHub Release
+        if: steps.check.outputs.changed == 'true' && steps.check-tag.outputs.exists == 'false'
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.version.outputs.tag_version }}
+          name: "HoyoLab Auto ${{ steps.version.outputs.tag_version }}"
+          body: ${{ steps.changelog.outputs.changelog }}
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

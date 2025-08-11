@@ -14,6 +14,7 @@
 A multi-purpose tool for any supported Hoyoverse games. This tool is designed to assist with daily check-ins, stamina checks, expedition checks, automatic code-redemption, and more.
 
 ## Table of Contents
+- [🌐 Web UI Setup](#-web-ui-setup)
 - [Google App Script](#google-app-script)
 - [Supported Games](#supported-games)
 - [Features](#features)
@@ -23,6 +24,41 @@ A multi-purpose tool for any supported Hoyoverse games. This tool is designed to
 - [Usage](#usage)
 - [Notifications Setup](#notifications-setup)
 - [Running with Docker](#running-with-docker)
+
+## 🌐 Web UI Setup
+
+**NEW!** HoyoLab Auto now includes a modern web-based setup wizard and settings interface!
+
+### 🚀 Quick Start with Web UI
+
+1. **For new users** - Setup Wizard:
+   ```bash
+   npm run web-setup
+   ```
+   Open [http://localhost:3001](http://localhost:3001) and follow the guided setup.
+
+2. **For existing users** - Settings Panel:
+   ```bash
+   npm run web-ui
+   ```
+   Open [http://localhost:3000](http://localhost:3000) to manage your configuration.
+
+### ✨ Web UI Features
+- 🎮 **Interactive Game Selection**: Choose your HoyoVerse games with a click
+- 🔑 **Easy Cookie Input**: Guided cookie setup with validation
+- 📱 **Notification Setup**: Configure Discord, Telegram, or webhooks
+- ⚙️ **Live Settings Panel**: Manage accounts and settings in real-time
+- 📊 **Dashboard**: Monitor your automation status
+- 📜 **Live Logs**: View application logs in the browser
+
+### 🐳 Docker with Web UI
+```bash
+# Start both the bot and web UI
+docker-compose up
+
+# Access web UI at http://localhost:3001
+# Main bot runs automatically after setup
+```
 
 ## Google App Script
 If you don't have a server to run this script and simply just want to use it for checking in, you can use Google App Script.
